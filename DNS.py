@@ -23,10 +23,10 @@ def handle_dns_request(packet):
         return
 
     dns_response = Ether(src=dns_mac_address, dst="ff:ff:ff:ff:ff:ff") / \
-        IP(src=dns_server_ip, dst=packet[IP].src) \
-        / UDP(sport=dns_server_port, dport=packet[UDP].sport) \
-        / DNS(id=packet[DNS].id, qr=1, aa=1,
-              qd=packet[DNS].qd, an=DNSRR(rrname=packet[DNS].qd.qname, ttl=10, rdata=domain_ip))
+        IP(src=dns_server_ip, dst=packet[IP].src) / \
+        UDP(sport=dns_server_port, dport=packet[UDP].sport) / \
+        DNS(id=packet[DNS].id, qr=1, aa=1,
+            qd=packet[DNS].qd, an=DNSRR(rrname=packet[DNS].qd.qname, ttl=10, rdata=domain_ip))
     sendp(dns_response)
     print("DNS response sent. waiting for next request...")
 
