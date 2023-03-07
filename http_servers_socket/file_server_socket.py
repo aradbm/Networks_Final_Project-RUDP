@@ -1,4 +1,4 @@
-from http.server import HTTPServer, BaseHTTPRequestHandler
+import socket
 import os
 import sys
 ip = ""
@@ -10,21 +10,25 @@ image = ""
 """
 
 
-class MyHandler(BaseHTTPRequestHandler):
-    # return cat image
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'image/png')
-        self.end_headers()
-        print("printing from port:" + port)
-        with open(image, 'rb') as f:
-            self.wfile.write(f.read())
-
-
 def run_server(ip, port, image):
-    server = HTTPServer((ip, int(port)), MyHandler)
+    # create socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((ip, int(port)))
+    s.listen(1)
     print(f'ip is {ip}', f'port is {port}', f'image is {image}')
-    server.serve_forever()
+    while True:
+        conn, addr = s.accept()
+        print(f'connected to client on port: {port}')
+        # listen for http get and return http response with image
+        while True:
+            data = conn.recv(1024)
+            if not data:
+                break
+            print(f'received: {data}')
+            if data.startswith(b'GET'):
+                with open(image, 'rb') as f:
+                    conn.send(f.read())
+        conn.close()
 
 
 if __name__ == "__main__":
