@@ -18,15 +18,18 @@ def check_domain_name(domain_name):
 def handle_dns_request(packet):
     print("DNS request received")
     domain_ip = check_domain_name(packet[DNS].qd.qname.decode("utf-8"))
-    if domain_ip is None:
-        print("DNS request for unknown domain")
-        return
-
-    dns_response = Ether(src=dns_mac_address, dst="ff:ff:ff:ff:ff:ff") / \
-        IP(src=dns_server_ip, dst=packet[IP].src) / \
-        UDP(sport=dns_server_port, dport=packet[UDP].sport) / \
-        DNS(id=packet[DNS].id, qr=1, aa=1,
-            qd=packet[DNS].qd, an=DNSRR(rrname=packet[DNS].qd.qname, ttl=10, rdata=domain_ip))
+    if domain_ip is None:  # domain not found -- return error code 3
+        dns_response = Ether(src=dns_mac_address, dst="ff:ff:ff:ff:ff:ff") / \
+            IP(src=dns_server_ip, dst=packet[IP].src) / \
+            UDP(sport=dns_server_port, dport=packet[UDP].sport) / \
+            DNS(id=packet[DNS].id, qr=1, aa=1, rcode=3,
+                qd=packet[DNS].qd)
+    else:  # domain found -- return domain ip
+        dns_response = Ether(src=dns_mac_address, dst="ff:ff:ff:ff:ff:ff") / \
+            IP(src=dns_server_ip, dst=packet[IP].src) / \
+            UDP(sport=dns_server_port, dport=packet[UDP].sport) / \
+            DNS(id=packet[DNS].id, qr=1, aa=1,
+                qd=packet[DNS].qd, an=DNSRR(rrname=packet[DNS].qd.qname, ttl=10, rdata=domain_ip))
     sendp(dns_response)
     print("DNS response sent. waiting for next request...")
 

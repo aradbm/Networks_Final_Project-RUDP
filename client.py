@@ -81,11 +81,14 @@ def get_app_ip(domain_name, dns_server):
     # create DNS request packet
     dns_request = Ether(src=client_mac, dst="ff:ff:ff:ff:ff:ff") / IP(src="127.0.0.1", dst=dns_server) / UDP(
         sport=20534, dport=53) / DNS(rd=1, qd=DNSQR(qname=domain_name))
-    # Send the DNS request packet and wait for a response
+    # Send the packet and wait for a response
     sendp(dns_request)
     response_received = False
     while not response_received:
         for packet in sniff(filter=f"udp src port 53 and ip src {dns_server}", iface=conf.iface, timeout=1, count=1):
+            if DNS in packet and packet[DNS].rcode == 3:  # DNS error
+                print("Domain name not found")
+                return None
             if DNS in packet and packet[DNS].ancount > 0:
                 response_received = True
                 break
@@ -93,19 +96,22 @@ def get_app_ip(domain_name, dns_server):
 
 
 if __name__ == "__main__":
-    # get the dns_ip from the dhcp server
-    client_mac = generate_random_mac()
+    client_mac = generate_random_mac()  # generate random mac address for the client
     print("Client MAC address: " + client_mac)
-    dns_server, new_ip = get_dns_ip()
+    dns_server, new_ip = get_dns_ip()  # get the dns_ip from the dhcp server
     if dns_server is None or new_ip is None:
         print("No DNS server IP address received")
         exit(1)
     else:
         print("Assigned IP address: " + new_ip)
         print("DNS server: " + dns_server)
-    # print current ip
+
     # get the ip of app.html from dns server
-    # app_ip = get_app_ip("app.html", "127.0.0.1")  # temporary dns ip
-    # print("IP address of app.html: " + app_ip)
+    app_ip = get_app_ip("app.html", "127.0.0.1")  # temporary dns ip
+    if app_ip is None:
+        print("No IP address received")
+        exit(1)
+    else:
+        print("IP address of app.html: " + app_ip)
 
     # connect to the web server and get the requested file:
