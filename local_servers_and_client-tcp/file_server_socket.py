@@ -41,5 +41,3 @@ if __name__ == "__main__":
     # change dir to this file's dir
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     run_server(ip, port, image)
-
-    print(f'server is running on {ip}:{port}')

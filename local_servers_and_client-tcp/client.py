@@ -1,10 +1,18 @@
 import time
+import random
+import socket
 from scapy.all import *
 from scapy.layers.dhcp import BOOTP, DHCP
 from scapy.layers.dns import DNS, DNSQR
 from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, UDP
 from scapy.sendrecv import *
+from PIL import Image
+from io import BytesIO
+from urllib.parse import urlparse
+client_mac = ""
+APP_SERVER_P = 30353
+CLIENT_P = 20054
 
 
 def generate_random_mac():
@@ -13,9 +21,6 @@ def generate_random_mac():
            random.randint(0x00, 0xff),
            random.randint(0x00, 0xff)]
     return ':'.join(map(lambda x: "%02x" % x, mac))
-
-
-client_mac = ""
 
 
 def get_dns_ip():  # Get the DNS server IP address from the DHCP server
@@ -95,9 +100,76 @@ def get_app_ip(domain_name, dns_server):
     return packet[DNS].an.rdata
 
 
+def send_request(server_address, request):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+        client_socket.bind(('localhost', CLIENT_P))
+        client_socket.connect(server_address)
+        client_socket.sendall(request)
+        response = client_socket.recv(1024).decode()
+        return response
+
+
+def get_image_data(url):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as img_socket:
+        img_socket.connect((url.netloc, 80))
+        img_socket.sendall(
+            f'GET {url.path} HTTP/1.1\r\nHost: {url.netloc}\r\n\r\n'.encode())
+        response = img_socket.recv(4096)
+        headers = response.split(b'\r\n\r\n')[0]
+        content_length = int(headers.split(
+            b'Content-Length: ')[1].split(b'\r\n')[0])
+        img_data = response.split(b'\r\n\r\n')[1]
+        while len(img_data) < content_length:
+            response = img_socket.recv(4096)
+            img_data += response
+        return img_data
+
+
+def show_image(img_data):
+    img = Image.open(BytesIO(img_data))
+    img.show()
+
+
+def save_image(img_data):
+    img = Image.open(BytesIO(img_data))
+    random_name = str(random.randint(0, 1000000))
+    img.save(f'cat{random_name}.png', format='PNG')
+
+
+def get_img_from_local_server(host, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((host, int(port)))
+    # send http get request
+    s.send(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+    # receive all image data
+    data = b''
+    while True:
+        part = s.recv(1024)
+        data += part
+        if len(part) < 1024:
+            break
+    s.close()
+    return data
+
+
+def get_img_and_show(app_ip):
+    request = b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n'
+    response = send_request((app_ip, APP_SERVER_P), request)
+    url = urlparse(response.split('\r\n')[1].split(' ')[1])
+    h = url.netloc.split(':')[0]
+    p = url.netloc.split(':')[1]
+    # from here change to clientttt!!!!!
+    img_data = get_img_from_local_server(h, p)
+    print(f'got {len(img_data)} bytes')
+    show_image(img_data)
+    save_image(img_data)
+
+
 if __name__ == "__main__":
+
     client_mac = generate_random_mac()  # generate random mac address for the client
     print("Client MAC address: " + client_mac)
+    input("Press Enter to continue...")
     dns_server, new_ip = get_dns_ip()  # get the dns_ip from the dhcp server
     if dns_server is None or new_ip is None:
         print("No DNS server IP address received")
@@ -107,7 +179,7 @@ if __name__ == "__main__":
         print("DNS server: " + dns_server)
 
     # get the ip of app.html from dns server
-    app_ip = get_app_ip("app.html", "127.0.0.1")  # temporary dns ip
+    app_ip = get_app_ip("app.html", dns_server)  # temporary dns ip
     if app_ip is None:
         print("No IP address received")
         exit(1)
@@ -115,3 +187,4 @@ if __name__ == "__main__":
         print("IP address of app.html: " + app_ip)
 
     # connect to the web server and get the requested file:
+    get_img_and_show(app_ip)

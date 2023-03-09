@@ -1,10 +1,9 @@
-import time
 from scapy.all import *
 from scapy.all import DNS, DNSRR, IP, sendp, sniff, UDP, Ether
 dns_server_ip = "127.0.0.1"
 dns_server_port = 53
 dns_mac_address = "00:00:00:00:00:00"
-domains_list = [("app.html.", "1.1.1.32"),
+domains_list = [("app.html.", "127.0.0.1"),
                 ("www.google.com.", "8.8.8.8")]
 
 

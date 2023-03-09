@@ -16,7 +16,7 @@ ip_pool_start = "10.100.102.27"
 ip_pool_end = "10.100.102.255"
 DHCP_SERVER_MAC = "00:00:00:00:00:01"
 lease_time = 86400  # Define the DHCP lease time (in seconds) -- 1 day
-dns_server_ip = "127.127.1.1"  # Define the DNS server IP address
+dns_server_ip = "127.0.0.1"  # Define the DNS server IP address
 ip_dic = {}  # Dictionary to store the MAC address and the assigned IP address of each client
 
 

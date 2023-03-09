@@ -5,9 +5,9 @@ import os
 2. the 3 servers will be started
 """
 servers = [
-    ("localhost", "30001", "cat1.png"),
-    ("localhost", "30002", "cat2.png"),
-    ("localhost", "30003", "cat3.png"),]
+    ("localhost", "30354", "cat1.png"),
+    ("localhost", "30355", "cat2.png"),
+    ("localhost", "30356", "cat3.png"),]
 
 if __name__ == "__main__":
     print("starting servers")
