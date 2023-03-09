@@ -140,6 +140,7 @@ def show_image(img_data):
 
 
 def save_image(img_data):
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     img = Image.open(BytesIO(img_data))
     random_name = str(random.randint(0, 1000000))
     img.save(f'cat{random_name}.png', format='PNG')
@@ -171,13 +172,14 @@ if __name__ == "__main__":
         print("DNS server: " + dns_server)
 
     # get the ip of app.html from dns server
-    app_ip = get_app_ip("app.html", dns_server)  # temporary dns ip
+    domain_name = "the_famous_cat.com"
+    app_ip = get_app_ip(domain_name, dns_server)  # temporary dns ip
     if app_ip is None:
         print("No IP address received")
         exit(1)
     else:
-        print("IP address of app.html: " + app_ip)
-
+        print(f"IP address of {domain_name}: " + app_ip)
+    print(app_ip)
     # connect to the web server and get the requested file:
     server_address = (app_ip, APP_SERVER_P)
     get_img_and_show(server_address)

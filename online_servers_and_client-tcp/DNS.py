@@ -3,7 +3,7 @@ from scapy.all import DNS, DNSRR, IP, sendp, sniff, UDP, Ether
 DNS_SERVER_IP = "127.0.0.1"
 DNS_SERVER_PORT = 53
 DNS_MAC_ADDRESS = "00:00:00:00:00:00"
-domains_list = [("app.html.", "127.0.0.1"),
+domains_list = [("the_famous_cat.com.", "127.0.0.1"),
                 ("www.google.com.", "8.8.8.8")]
 
 

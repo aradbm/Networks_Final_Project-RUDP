@@ -30,6 +30,7 @@ def handle_request(conn, addr):
         redirect_response = f"HTTP/1.1 307 Temporary Redirect\r\nLocation: {selected_server}\r\n\r\n"
     else:
         redirect_response = "HTTP/1.1 404 Not Found\r\n\r\n"
+    print(f"Returning response: {redirect_response} to {addr}")
     conn.sendall(redirect_response.encode())
     conn.close()
 
