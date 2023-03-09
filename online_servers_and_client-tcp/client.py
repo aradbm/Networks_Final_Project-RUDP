@@ -151,6 +151,7 @@ def get_img_and_show(server_address):
 
     request = b'GET / HTTP/1.1\r\nHost: the_famous_cat.com\r\n\r\n'
     response = send_request(server_address, request)
+    print(response)
     url = urlparse(response.split(' ')[4].splitlines()[0])
     img_data = get_image_data(url)
     show_image(img_data)

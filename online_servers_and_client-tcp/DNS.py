@@ -1,8 +1,8 @@
 from scapy.all import *
 from scapy.all import DNS, DNSRR, IP, sendp, sniff, UDP, Ether
-dns_server_ip = "127.0.0.1"
-dns_server_port = 53
-dns_mac_address = "00:00:00:00:00:00"
+DNS_SERVER_IP = "127.0.0.1"
+DNS_SERVER_PORT = 53
+DNS_MAC_ADDRESS = "00:00:00:00:00:00"
 domains_list = [("app.html.", "127.0.0.1"),
                 ("www.google.com.", "8.8.8.8")]
 
@@ -18,15 +18,15 @@ def handle_dns_request(packet):
     print("DNS request received")
     domain_ip = check_domain_name(packet[DNS].qd.qname.decode("utf-8"))
     if domain_ip is None:  # domain not found -- return error code 3
-        dns_response = Ether(src=dns_mac_address, dst="ff:ff:ff:ff:ff:ff") / \
-            IP(src=dns_server_ip, dst=packet[IP].src) / \
-            UDP(sport=dns_server_port, dport=packet[UDP].sport) / \
+        dns_response = Ether(src=DNS_MAC_ADDRESS, dst="ff:ff:ff:ff:ff:ff") / \
+            IP(src=DNS_SERVER_IP, dst=packet[IP].src) / \
+            UDP(sport=DNS_SERVER_PORT, dport=packet[UDP].sport) / \
             DNS(id=packet[DNS].id, qr=1, aa=1, rcode=3,
                 qd=packet[DNS].qd)
     else:  # domain found -- return domain ip
-        dns_response = Ether(src=dns_mac_address, dst="ff:ff:ff:ff:ff:ff") / \
-            IP(src=dns_server_ip, dst=packet[IP].src) / \
-            UDP(sport=dns_server_port, dport=packet[UDP].sport) / \
+        dns_response = Ether(src=DNS_MAC_ADDRESS, dst="ff:ff:ff:ff:ff:ff") / \
+            IP(src=DNS_SERVER_IP, dst=packet[IP].src) / \
+            UDP(sport=DNS_SERVER_PORT, dport=packet[UDP].sport) / \
             DNS(id=packet[DNS].id, qr=1, aa=1,
                 qd=packet[DNS].qd, an=DNSRR(rrname=packet[DNS].qd.qname, ttl=10, rdata=domain_ip))
     sendp(dns_response)
@@ -36,4 +36,4 @@ def handle_dns_request(packet):
 if __name__ == '__main__':
     print("Starting DNS server")
     sniff(
-        filter=f"udp dst port 53 and ip dst {dns_server_ip}", prn=handle_dns_request)
+        filter=f"udp dst port 53 and ip dst {DNS_SERVER_IP}", prn=handle_dns_request)

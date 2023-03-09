@@ -163,6 +163,7 @@ def get_img_and_show(app_ip):
     print(f'got {len(img_data)} bytes')
     show_image(img_data)
     save_image(img_data)
+    print("saved image to curent directory")
 
 
 if __name__ == "__main__":
@@ -188,3 +189,4 @@ if __name__ == "__main__":
 
     # connect to the web server and get the requested file:
     get_img_and_show(app_ip)
+    print("Done.")
