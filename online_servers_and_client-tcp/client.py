@@ -80,13 +80,12 @@ def get_dns_ip():  # Get the DNS server IP address from the DHCP server
     conf.ip = offered_ip  # Set the IP address to use
     return dns_server, offered_ip
 
+
 # Get the IP address of the requested domain name from the DNS server
-
-
 def get_app_ip(domain_name, dns_server):
     # create DNS request packet
     dns_request = Ether(src=client_mac, dst="ff:ff:ff:ff:ff:ff") / IP(src="127.0.0.1", dst=dns_server) / UDP(
-        sport=20534, dport=53) / DNS(rd=1, qd=DNSQR(qname=domain_name))
+        sport=CLIENT_P, dport=53) / DNS(rd=1, qd=DNSQR(qname=domain_name))
     # Send the packet and wait for a response
     sendp(dns_request)
     response_received = False
@@ -100,9 +99,8 @@ def get_app_ip(domain_name, dns_server):
                 break
     return packet[DNS].an.rdata
 
+
 # send a request to the application server and return the response
-
-
 def send_request(server_address, request):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         client_socket.bind(('localhost', CLIENT_P))

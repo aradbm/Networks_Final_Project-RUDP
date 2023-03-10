@@ -1,9 +1,9 @@
 from scapy.all import *
 from scapy.all import DNS, DNSRR, IP, sendp, sniff, UDP, Ether
-DNS_SERVER_IP = "127.0.0.1"
+DNS_SERVER_IP = "192.168.1.200"
 DNS_SERVER_PORT = 53
 DNS_MAC_ADDRESS = "00:00:00:00:00:00"
-domains_list = [("app.html.", "127.0.0.1"),
+domains_list = [("the_famous_cat.com.", "127.0.0.1"),
                 ("www.google.com.", "8.8.8.8")]
 
 
@@ -34,6 +34,7 @@ def handle_dns_request(packet):
 
 
 if __name__ == '__main__':
-    print("Starting DNS server")
+    print(
+        f"Starting DNS server on IP {DNS_SERVER_IP} and port {DNS_SERVER_PORT}")
     sniff(
         filter=f"udp dst port 53 and ip dst {DNS_SERVER_IP}", prn=handle_dns_request)

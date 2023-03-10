@@ -1,9 +1,10 @@
 from scapy.all import *
 from scapy.all import IP, sendp, sniff, UDP, Ether, BOOTP, DHCP
-DHCP_SERVER_IP = "127.0.0.1"
+DHCP_SERVER_IP = "192.168.1.100"
+DNS_SERVER_IP = "192.168.1.200"
 DHCP_PORT = 67
 DHCP_SERVER_MAC = "00:00:00:00:00:01"
-DNS_SERVER_IP = "127.0.0.1"  # Define the DNS server IP address
+
 ip_dic = {}  # Dictionary to store the MAC address and the assigned IP address of each client
 
 # DHCP server is a server that assign IP addresses to clients on a network
@@ -79,7 +80,7 @@ def handle_dhcp_request(packet):
 def handle_dhcp(packet):
     if DHCP in packet and packet[DHCP].options[0][1] == 1:  # DHCP discover
         handle_dhcp_discover(packet)
-    elif DHCP in packet and packet[DHCP].options[0][1] == 3:  # DHCP request
+    if DHCP in packet and packet[DHCP].options[0][1] == 3:  # DHCP request
         handle_dhcp_request(packet)
 
 
