@@ -1,4 +1,3 @@
-import time
 class CubicCC:
     def __init__(self):
         self.cwnd = 1
@@ -16,25 +15,25 @@ class CubicCC:
         self.jump = 1
 
     def on_packet_sent(self):
-       pass
+        pass
 
     def on_packet_acknowledged(self, a_rwnd):
         if self.cwnd >= self.w_max:
             self.cwnd += self.jump
             self.jump *= 2
-            self.w_max = min(self.cwnd,a_rwnd)
+            self.w_max = min(self.cwnd, a_rwnd)
         else:
-            self.cwnd += max((self.w_max-self.cwnd)/2,1)
+            self.cwnd += max((self.w_max-self.cwnd)/2, 1)
 
         self.peer_w_max = a_rwnd
-        self.ssthresh = max(self.w_max * 0.4,1)
-        self.cwnd = min(self.peer_w_max,self.cwnd)
+        self.ssthresh = max(self.w_max * 0.4, 1)
+        self.cwnd = min(self.peer_w_max, self.cwnd)
         self.int_cwnd = int(self.cwnd)
 
     def on_triple_ack(self):
         self.jump = 1
         self.w_max = self.cwnd
-        self.ssthresh = max(self.w_max * 0.4,1)
+        self.ssthresh = max(self.w_max * 0.4, 1)
         self.cwnd = self.ssthresh
         self.int_cwnd = int(self.cwnd)
 

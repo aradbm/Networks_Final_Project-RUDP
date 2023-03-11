@@ -8,11 +8,11 @@ from CubicCC import CubicCC
 
 class SCTPSocket:
 
-    def __init__(self,sock=None,a_rwnd=50,n_out_streams=1,n_in_streams=1,
-                 packet_size=65536,peer_tsn=0,sent_packets={},received_packets={},
-                 acknowledged_packets={},in_flight={}, delay = 0, verbose = False,
-                 timeout = 1.5, cc_printer = False, pkt_printer = False,
-                 packet_loss= -1):
+    def __init__(self, sock=None, a_rwnd=50, n_out_streams=1, n_in_streams=1,
+                 packet_size=65536, peer_tsn=0, sent_packets={}, received_packets={},
+                 acknowledged_packets={}, in_flight={}, delay=0, verbose=False,
+                 timeout=1.5, cc_printer=False, pkt_printer=False,
+                 packet_loss=-1):
         self.cc_printer = cc_printer
         self.pkt_printer = pkt_printer
 
@@ -25,7 +25,7 @@ class SCTPSocket:
         self.port = RandInt() + 3000
         self.packet_size = packet_size
         self.peer_tsn = 0
-        self.local_tsn = random.randint(1,999999)
+        self.local_tsn = random.randint(1, 999999)
         self.sent_packets = sent_packets
         self.received_packets = received_packets
         self.dup_packets = {}
@@ -46,20 +46,19 @@ class SCTPSocket:
         self.packet_loss = packet_loss
         self.len = 100
         self.data_buffer = []
-        for i in range(0,self.len):
+        for i in range(0, self.len):
             self.data_buffer.append(None)
 
-
         if sock is None:
-            self.socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-            self.socket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         else:
             self.socket = sock
 
         # self.socket.settimeout(timeout)  # set a timeout of 2 seconds
         self.socket.settimeout(None)  # set a timeout of 2 seconds
 
-    def bind(self,tuple):
+    def bind(self, tuple):
         self.addr = tuple[0]
         self.port = tuple[1]
         self.socket.bind(tuple)
@@ -86,29 +85,31 @@ class SCTPSocket:
             self.shutdown(self.peer_tuple)
         self.socket.close()
 
-    def sendto(self,payload,tuple = None):
+    def sendto(self, payload, tuple=None):
         if tuple is None:
             tuple = self.peer_tuple
         if not self.connected:
             return
 
-        self.data_buffer = self.chunk_data(payload,self.packet_size)
+        self.data_buffer = self.chunk_data(payload, self.packet_size)
         self.len = len(self.data_buffer)
 
         self.cc.cubic_reset()
         self.transfering_data = True
         self.send_data(tuple)
 
-    def recvfrom(self,packet_size = 1024):
+    def recvfrom(self, packet_size=1024):
         if not self.connected:
             self.receive_handshake(packet_size)
         self.reset_dup()
         self.a_rwnd = 50
         self.transfering_data = True
         if self.pkt_printer:
-            print(f"waiting for data\ttsn={self.local_tsn}\tptsn={self.peer_tsn}")
+            print(
+                f"waiting for data\ttsn={self.local_tsn}\tptsn={self.peer_tsn}")
         while True:
-            if not self.connected: return
+            if not self.connected:
+                return
             self.check_timer()
             try:
                 if self.local_tsn in self.received_packets.keys():
@@ -120,9 +121,9 @@ class SCTPSocket:
             except:
                 continue
 
-    def handshake(self,tuple):
+    def handshake(self, tuple):
         sctp_pkt = self.create_init_packet(tuple)
-        send(sctp_pkt, verbose=self.verbose,inter=self.delay)
+        send(sctp_pkt, verbose=self.verbose, inter=self.delay)
         self.start_timer([sctp_pkt])
         while True:
             self.check_timer()
@@ -136,7 +137,7 @@ class SCTPSocket:
             except:
                 continue
 
-    def receive_handshake(self,packet_size):
+    def receive_handshake(self, packet_size):
         while True:
             data = None
             try:
@@ -145,9 +146,12 @@ class SCTPSocket:
                         self.local_tsn = tsn
                         pkt = p
                         if pkt.haslayer(SCTPChunkInit):
-                            self.parse_init_packet(pkt[SCTPChunkInit], self.peer_tuple)
-                            sctp_pkt_ack = self.create_init_ack_packet(pkt, self.peer_tuple)
-                            send(sctp_pkt_ack,verbose=self.verbose,inter=self.delay)
+                            self.parse_init_packet(
+                                pkt[SCTPChunkInit], self.peer_tuple)
+                            sctp_pkt_ack = self.create_init_ack_packet(
+                                pkt, self.peer_tuple)
+                            send(sctp_pkt_ack, verbose=self.verbose,
+                                 inter=self.delay)
                             return
             except:
                 continue
@@ -158,12 +162,13 @@ class SCTPSocket:
         self.start_timer(pkts)
         if self.pkt_printer:
             print(f"waiting for ack\tseq={self.seq}\tcwnd={self.cc.int_cwnd}\t"
-              f"tsn={self.local_tsn}\tptsn={self.peer_tsn}")
+                  f"tsn={self.local_tsn}\tptsn={self.peer_tsn}")
         if self.cc_printer:
             self.cc.print()
         while True:
             try:
-                if not self.connected: return
+                if not self.connected:
+                    return
                 self.check_timer()
                 self.check_dup()
                 if self.peer_tsn in self.received_packets.keys():
@@ -175,18 +180,20 @@ class SCTPSocket:
                             return
             except:
                 continue
+
     def shutdown(self, tuple):
         sctp_pkt = self.create_shutdown_packet(tuple)
-        send(sctp_pkt,verbose=self.verbose,inter=self.delay)
+        send(sctp_pkt, verbose=self.verbose, inter=self.delay)
         if self.pkt_printer:
             print(f"waiting for ack\t"
-              f"tsn={self.local_tsn}\tptsn={self.peer_tsn}")
+                  f"tsn={self.local_tsn}\tptsn={self.peer_tsn}")
         while True:
             try:
                 if 0 in self.received_packets.keys():
                     pkt = self.received_packets[0]
                     if pkt.haslayer(SCTPChunkShutdownAck):
-                        self.parse_shutdown_ack_packet(pkt[SCTPChunkShutdownAck])
+                        self.parse_shutdown_ack_packet(
+                            pkt[SCTPChunkShutdownAck])
                         return
             except:
                 continue
@@ -200,7 +207,7 @@ class SCTPSocket:
         print("started thread")
         while True:
             try:
-                data,addr = self.socket.recvfrom(self.packet_size)
+                data, addr = self.socket.recvfrom(self.packet_size)
                 pkt = SCTP(data)
 
                 rand_num = random.random()
@@ -220,26 +227,26 @@ class SCTPSocket:
                     break
                 elif pkt.haslayer(SCTPChunkData):
                     if pkt[SCTPChunkData].tsn in self.dup_packets.keys():
-                        self.dup_packets[pkt[SCTPChunkData].tsn]+=1
+                        self.dup_packets[pkt[SCTPChunkData].tsn] += 1
                     else:
                         self.received_packets[pkt[SCTPChunkData].tsn] = pkt
                         self.dup_packets[pkt[SCTPChunkData].tsn] = 0
                 elif pkt.haslayer(SCTPChunkSACK):
                     if pkt[SCTPChunkSACK].cumul_tsn_ack in self.dup_packets.keys():
-                        self.dup_packets[pkt[SCTPChunkSACK].cumul_tsn_ack]+=1
+                        self.dup_packets[pkt[SCTPChunkSACK].cumul_tsn_ack] += 1
                     else:
                         self.received_packets[pkt[SCTPChunkSACK].cumul_tsn_ack] = pkt
                         self.dup_packets[pkt[SCTPChunkSACK].cumul_tsn_ack] = 0
                 elif pkt.haslayer(SCTPChunkInit):
                     if pkt[SCTPChunkInit].init_tsn in self.dup_packets.keys():
-                        self.dup_packets[pkt[SCTPChunkInit].init_tsn]+=1
+                        self.dup_packets[pkt[SCTPChunkInit].init_tsn] += 1
                     else:
                         self.received_packets[pkt[SCTPChunkInit].init_tsn] = pkt
                         self.dup_packets[pkt[SCTPChunkInit].init_tsn] = 0
                     self.peer_tuple = addr
                 elif pkt.haslayer(SCTPChunkInitAck):
                     if pkt[SCTPChunkInitAck].init_tsn in self.dup_packets.keys():
-                        self.dup_packets[pkt[SCTPChunkInitAck].init_tsn]+=1
+                        self.dup_packets[pkt[SCTPChunkInitAck].init_tsn] += 1
                     else:
                         self.received_packets[pkt[SCTPChunkInitAck].init_tsn] = pkt
                         self.dup_packets[pkt[SCTPChunkInitAck].init_tsn] = 0
@@ -250,17 +257,17 @@ class SCTPSocket:
                 continue
         print("ended thread")
 
-    def create_init_packet(self,tuple):
-        self.local_tsn = random.randint(1,999999)
+    def create_init_packet(self, tuple):
+        self.local_tsn = random.randint(1, 999999)
 
-        packet = IP(dst=tuple[0],src=self.addr) /\
-                 UDP(sport=self.port,dport=tuple[1]) /\
-                 SCTP(sport=self.port,dport=tuple[1]) / \
-                 SCTPChunkInit(init_tag=random.randint(1,999999),
-                               a_rwnd=self.a_rwnd,
-                               n_out_streams=self.n_out_streams,
-                               n_in_streams=self.n_in_streams,
-                               init_tsn=self.local_tsn)
+        packet = IP(dst=tuple[0], src=self.addr) /\
+            UDP(sport=self.port, dport=tuple[1]) /\
+            SCTP(sport=self.port, dport=tuple[1]) / \
+            SCTPChunkInit(init_tag=random.randint(1, 999999),
+                          a_rwnd=self.a_rwnd,
+                          n_out_streams=self.n_out_streams,
+                          n_in_streams=self.n_in_streams,
+                          init_tsn=self.local_tsn)
 
         # Reliability
         self.sent_packets[self.local_tsn] = packet
@@ -270,16 +277,16 @@ class SCTPSocket:
 
         return packet
 
-    def create_init_ack_packet(self,pkt, addr):
-        init_pkt =pkt[SCTPChunkInit]
-        packet = IP(dst=addr[0],src=self.addr) / \
-                 UDP(sport=self.port,dport=addr[1]) / \
-                 SCTP(sport=self.port,dport=addr[1]) / \
-                 SCTPChunkInitAck(init_tag=init_pkt.init_tag,
-                                  a_rwnd=self.a_rwnd,
-                                  n_out_streams=self.n_out_streams,
-                                  n_in_streams=self.n_in_streams,
-                                  init_tsn=init_pkt.init_tsn)
+    def create_init_ack_packet(self, pkt, addr):
+        init_pkt = pkt[SCTPChunkInit]
+        packet = IP(dst=addr[0], src=self.addr) / \
+            UDP(sport=self.port, dport=addr[1]) / \
+            SCTP(sport=self.port, dport=addr[1]) / \
+            SCTPChunkInitAck(init_tag=init_pkt.init_tag,
+                             a_rwnd=self.a_rwnd,
+                             n_out_streams=self.n_out_streams,
+                             n_in_streams=self.n_in_streams,
+                             init_tsn=init_pkt.init_tsn)
 
         self.peer_tuple = addr
 
@@ -292,9 +299,9 @@ class SCTPSocket:
     # SCTPChunkData(_pkt, /, *, type=0, reserved=None, delay_sack=0,
     # unordered=0, beginning=0, ending=0, len=None, tsn=None,
     # stream_id=None, stream_seq=None, proto_id=None, data=None)
-    def create_data_packet(self,tuple):
+    def create_data_packet(self, tuple):
         packets = []
-        for i in range(0,self.cc.int_cwnd):
+        for i in range(0, self.cc.int_cwnd):
             if self.seq+i+1 > self.len:
                 self.peer_tsn = self.local_tsn+i
                 break
@@ -307,14 +314,14 @@ class SCTPSocket:
             if i + 1 == self.cc.int_cwnd:
                 delay_sack = 1
 
-            packet = IP(dst=tuple[0],src=self.addr) / \
-                     UDP(sport=self.port,dport=tuple[1]) / \
-                     SCTP(sport=self.port,dport=tuple[1]) / \
-                     SCTPChunkData(
-                         beginning=beginning,ending=ending,stream_seq=self.seq+i,
-                         tsn=self.local_tsn+i,proto_id=0,delay_sack=delay_sack,
-                         data=self.data_buffer[self.seq+i]
-                     )
+            packet = IP(dst=tuple[0], src=self.addr) / \
+                UDP(sport=self.port, dport=tuple[1]) / \
+                SCTP(sport=self.port, dport=tuple[1]) / \
+                SCTPChunkData(
+                beginning=beginning, ending=ending, stream_seq=self.seq+i,
+                tsn=self.local_tsn+i, proto_id=0, delay_sack=delay_sack,
+                data=self.data_buffer[self.seq+i]
+            )
 
             packets += [packet]
             if not self.sent_series:
@@ -329,7 +336,7 @@ class SCTPSocket:
                       f"ds-{packet[SCTPChunkData].delay_sack}"
                       )
 
-            send(packet,verbose=self.verbose,inter=self.delay)
+            send(packet, verbose=self.verbose, inter=self.delay)
 
             if ending == 1:
                 break
@@ -339,32 +346,31 @@ class SCTPSocket:
 
         return packets
 
-
     # SCTPChunkSACK( _pkt, /, *,type = 3,flags = None,len = None,
     # cumul_tsn_ack = None,a_rwnd = None,n_gap_ack = None,n_dup_tsn = None,
     # gap_ack_list = [],dup_tsn_list = [])
-    def create_data_ack_packet(self,pkt, addr):
+    def create_data_ack_packet(self, pkt, addr):
         self.check_dup()
 
         data_pkt = pkt[SCTPChunkData]
-        packet = IP(dst=addr[0],src=self.addr) / \
-                 UDP(sport=self.port,dport=addr[1]) / \
-                 SCTP(sport=self.port,dport=addr[1]) / \
-                 SCTPChunkSACK(cumul_tsn_ack=data_pkt.tsn,
-                               a_rwnd=self.a_rwnd)
+        packet = IP(dst=addr[0], src=self.addr) / \
+            UDP(sport=self.port, dport=addr[1]) / \
+            SCTP(sport=self.port, dport=addr[1]) / \
+            SCTPChunkSACK(cumul_tsn_ack=data_pkt.tsn,
+                          a_rwnd=self.a_rwnd)
 
         # Reliability
         self.local_tsn += 1
 
         return packet
 
-    def create_shutdown_packet(self,tuple):
-        packet = IP(dst=tuple[0],src=self.addr) / \
-                 UDP(sport=self.port,dport=tuple[1]) / \
-                 SCTP(sport=self.port,dport=tuple[1]) / \
-                 SCTPChunkShutdown(
-                     cumul_tsn_ack=self.local_tsn
-                 )
+    def create_shutdown_packet(self, tuple):
+        packet = IP(dst=tuple[0], src=self.addr) / \
+            UDP(sport=self.port, dport=tuple[1]) / \
+            SCTP(sport=self.port, dport=tuple[1]) / \
+            SCTPChunkShutdown(
+            cumul_tsn_ack=self.local_tsn
+        )
 
         # Reliability
         self.in_flight[self.local_tsn] = packet
@@ -373,26 +379,26 @@ class SCTPSocket:
 
         return packet
 
-    def create_shutdown_ack_packet(self,pkt,tuple):
-        packet = IP(dst=tuple[0],src=self.addr) / \
-                 UDP(sport=self.port,dport=tuple[1]) / \
-                 SCTP(sport=self.port,dport=tuple[1]) / \
-                 SCTPChunkShutdownAck()
+    def create_shutdown_ack_packet(self, pkt, tuple):
+        packet = IP(dst=tuple[0], src=self.addr) / \
+            UDP(sport=self.port, dport=tuple[1]) / \
+            SCTP(sport=self.port, dport=tuple[1]) / \
+            SCTPChunkShutdownAck()
 
         return packet
 
-    def parse_init_packet(self,pkt, addr):
+    def parse_init_packet(self, pkt, addr):
         self.cc.peer_w_max = pkt[SCTPChunkInit].a_rwnd
 
         pkt.show()
-            # Reliability
+        # Reliability
         self.peer_tsn = pkt[SCTPChunkInit].init_tsn + 1
         self.local_tsn = self.peer_tsn
         self.connected = True
 
         return True
 
-    def parse_init_ack_packet(self,pkt):
+    def parse_init_ack_packet(self, pkt):
         self.cc.peer_w_max = pkt[SCTPChunkInitAck].a_rwnd
         pkt.show()
 
@@ -405,15 +411,15 @@ class SCTPSocket:
 
         return True
 
-    def parse_data_packet(self,pkt, addr):
+    def parse_data_packet(self, pkt, addr):
         if pkt[SCTPChunkData].stream_seq > self.len-10:
             self.len += 100
-            for i in range(0,100):
+            for i in range(0, 100):
                 self.data_buffer.append(None)
 
         if pkt[SCTPChunkData].delay_sack == 1:
             flag = True
-            for i in range(0,pkt[SCTPChunkData].stream_seq):
+            for i in range(0, pkt[SCTPChunkData].stream_seq):
                 if self.data_buffer[i] is None:
                     flag = False
 
@@ -430,7 +436,7 @@ class SCTPSocket:
                 self.peer_tsn = pkt[SCTPChunkData].tsn
                 self.local_tsn = pkt[SCTPChunkData].tsn
 
-                sctp_pkt_ack = self.create_data_ack_packet(pkt,addr)
+                sctp_pkt_ack = self.create_data_ack_packet(pkt, addr)
 
                 if self.pkt_printer:
                     print("----------------sent--------------------------")
@@ -440,7 +446,7 @@ class SCTPSocket:
                           f"a_rwnd-{sctp_pkt_ack[SCTPChunkSACK].a_rwnd}\t"
                           )
 
-                send(sctp_pkt_ack,verbose=self.verbose,inter=self.delay)
+                send(sctp_pkt_ack, verbose=self.verbose, inter=self.delay)
                 self.start_timer([sctp_pkt_ack])
                 if pkt[SCTPChunkData].ending == 1:
                     self.transfering_data = False
@@ -459,7 +465,7 @@ class SCTPSocket:
 
         return True
 
-    def parse_data_ack_packet(self,pkt):
+    def parse_data_ack_packet(self, pkt):
         self.cc.on_packet_acknowledged(pkt[SCTPChunkSACK].a_rwnd)
 
         if self.pkt_printer:
@@ -484,15 +490,15 @@ class SCTPSocket:
 
         return True
 
-    def parse_shutdown_packet(self,pkt):
+    def parse_shutdown_packet(self, pkt):
         pkt.show()
 
         # Reliability
         self.peer_tsn = pkt[SCTPChunkShutdown].cumul_tsn_ack
         self.received_packets[self.peer_tsn] = pkt
         self.local_tsn = pkt[SCTPChunkShutdown].cumul_tsn_ack
-        sctp_pkt_ack = self.create_shutdown_ack_packet(pkt,self.peer_tuple)
-        send(sctp_pkt_ack,verbose=self.verbose,inter=self.delay)
+        sctp_pkt_ack = self.create_shutdown_ack_packet(pkt, self.peer_tuple)
+        send(sctp_pkt_ack, verbose=self.verbose, inter=self.delay)
 
         if self.pkt_printer:
             print("session summary: ")
@@ -504,7 +510,7 @@ class SCTPSocket:
         self.connected = False
         return True
 
-    def parse_shutdown_ack_packet(self,pkt):
+    def parse_shutdown_ack_packet(self, pkt):
         pkt.show()
         # Reliability
         self.peer_tsn = self.local_tsn
@@ -519,7 +525,6 @@ class SCTPSocket:
             print(f"sent packets: {self.sent_packets.keys()}")
             print(f"in flight packets: {self.in_flight.keys()}")
             print(f"acknowledged packets: {self.acknowledged_packets.keys()}")
-
 
         # reset for next session
         self.peer_tsn = 0
@@ -548,9 +553,12 @@ class SCTPSocket:
     def unite_data(self):
         data = None
         for x in self.data_buffer:
-            if x is None: break
-            if data is None: data = x
-            else: data += x
+            if x is None:
+                break
+            if data is None:
+                data = x
+            else:
+                data += x
         return data
 
     def start_timer(self, pkts):
@@ -565,8 +573,7 @@ class SCTPSocket:
             if self.cc_printer:
                 print("timeout detected")
             self.cc.on_timeout()
-            self.timeout_counter-=3
-
+            self.timeout_counter -= 3
 
         if time.time() - self.start_time > self.timeout:
             self.timeout_counter += 1
@@ -574,7 +581,7 @@ class SCTPSocket:
                 if self.cc_printer:
                     print(f"resended last packets")
                 for p in self.last_pkts:
-                    send(p,verbose=self.verbose,inter=self.delay)
+                    send(p, verbose=self.verbose, inter=self.delay)
                 self.start_timer(None)
             except:
                 return
@@ -597,21 +604,21 @@ class SCTPSocket:
             if self.cc_printer:
                 print("duplicate packets detected")
             try:
-                for i in range(0,3):
+                for i in range(0, 3):
                     for p in self.last_pkts:
-                        send(p,verbose=self.verbose,inter=self.delay)
+                        send(p, verbose=self.verbose, inter=self.delay)
                 if self.cc_printer:
                     print("sent 3 duplicate acks")
             except:
                 if self.cc_printer:
                     print("failed to send 3 duplicate acks")
-            self.a_rwnd = max(int(self.a_rwnd/(dup_pkts+1)),1)
+            self.a_rwnd = max(int(self.a_rwnd/(dup_pkts+1)), 1)
         elif dup_acks > 0:
             if self.cc_printer:
                 print("duplicate acks detected")
             try:
                 for p in self.last_pkts:
-                    send(p,verbose=self.verbose,inter=self.delay)
+                    send(p, verbose=self.verbose, inter=self.delay)
                 if self.cc_printer:
                     print("success to resend packets")
             except:
@@ -619,11 +626,8 @@ class SCTPSocket:
                     print("failed to resend packets")
             self.cc.on_triple_ack()
         else:
-            self.a_rwnd = min(self.a_rwnd*2,50)
+            self.a_rwnd = min(self.a_rwnd*2, 50)
 
     def reset_dup(self):
         for tsn in self.dup_packets.keys():
             self.dup_packets[tsn] = 0
-
-
-

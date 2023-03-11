@@ -14,7 +14,8 @@ if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     processes = []
     for server in servers:
-        command = ["python","file_server_socket.py",server[0],server[1],server[2]]
+        command = ["python", "file_server_socket.py",
+                   server[0], server[1], server[2]]
         process = subprocess.Popen(command)
         processes.append(process)
     for process in processes:
