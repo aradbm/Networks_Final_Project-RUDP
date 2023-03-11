@@ -153,8 +153,10 @@ def get_img_from_local_server(host, port):
             part = s.recv(1024)
             data += part
         except:
-            if data == b'': continue
-            else: break
+            if data == b'':
+                continue
+            else:
+                break
     s.close()
     return data
 
@@ -176,25 +178,24 @@ def get_img_and_show(app_ip):
 if __name__ == "__main__":
 
     client_mac = generate_random_mac()  # generate random mac address for the client
-    # print("Client MAC address: " + client_mac)
-    # input("Press Enter to continue...")
-    # dns_server, new_ip = get_dns_ip()  # get the dns_ip from the dhcp server
-    # if dns_server is None or new_ip is None:
-    #     print("No DNS server IP address received")
-    #     exit(1)
-    # else:
-    #     print("Assigned IP address: " + new_ip)
-    #     print("DNS server: " + dns_server)
-    #
-    # # get the ip of app.html from dns server
-    # app_ip = get_app_ip("app.html", dns_server)  # temporary dns ip
-    # if app_ip is None:
-    #     print("No IP address received")
-    #     exit(1)
-    # else:
-    #     print("IP address of app.html: " + app_ip)
+    print("Client MAC address: " + client_mac)
+    dns_server, new_ip = get_dns_ip()  # get the dns_ip from the dhcp server
+    if dns_server is None or new_ip is None:
+        print("No DNS server IP address received")
+        exit(1)
+    else:
+        print("Assigned IP address: " + new_ip)
+        print("DNS server: " + dns_server)
+
+    # get the ip of app.html from dns server
+    app_ip = get_app_ip(sys.argv[1], dns_server)  # temporary dns ip
+    if app_ip is None:
+        print("No IP address received")
+        exit(1)
+    else:
+        print(f"IP address of {sys.argv[1]}: " + app_ip)
 
     # connect to the web server and get the requested file:
-    # get_img_and_show(app_ip)
+    get_img_and_show(app_ip)
     get_img_and_show("127.0.0.1")
     print("Done.")

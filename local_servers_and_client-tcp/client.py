@@ -158,6 +158,7 @@ def get_img_from_local_server(host, port):
     s.close()
     return data
 
+
 def get_img_and_show(app_ip):
     request = b"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"
     response = send_request((app_ip, APP_SERVER_P), request)
@@ -196,7 +197,7 @@ if __name__ == "__main__":
         print("No IP address received")
         exit(1)
     else:
-        print("IP address of the_famous_cat.com: " + app_ip)
+        print(f"IP address of {sys.argv[1]}: " + app_ip)
 
     # connect to the web server and get the requested file:
     get_img_and_show(app_ip)
