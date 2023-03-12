@@ -10,6 +10,7 @@ image = ""
 def run_server(ip, port, image):
     # create socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
     s.bind((ip, int(port)))
     s.listen(1)
     print(f"ip is {ip}, port is {port}, image is {image}")
@@ -23,7 +24,7 @@ def run_server(ip, port, image):
                 break
             print(f"received: {data}")
             if data.startswith(b'GET'):
-                with open(image, 'rb') as f:
+                with open(image, "rb") as f:
                     conn.send(f.read())
         conn.close()
 

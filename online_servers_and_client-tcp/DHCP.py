@@ -4,7 +4,7 @@ DHCP_SERVER_IP = "192.168.1.100"
 DNS_SERVER_IP = "192.168.1.200"
 DHCP_PORT = 67
 DHCP_SERVER_MAC = "00:00:00:00:00:01"
-
+IFACE = "Microsoft Wi-Fi Direct Virtual Adapter"
 ip_dic = {}  # Dictionary to store the MAC address and the assigned IP address of each client
 
 # DHCP server is a server that assign IP addresses to clients on a network
@@ -86,6 +86,10 @@ def handle_dhcp(packet):
 
 if __name__ == '__main__':
     # Start sniffing for DHCP packets
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     print("Starting DHCP server")
-    sniff(
-        filter=f"udp and dst port 67", iface="Ethernet", prn=handle_dhcp)
+    while True:
+        try:
+            sniff(filter="udp and dst port 67", iface=conf.iface, prn=handle_dhcp)
+        except:
+            continue

@@ -12,11 +12,11 @@ from io import BytesIO
 from urllib.parse import urlparse
 from SCTPSocket import SCTPSocket
 
-
+IFACE = conf.iface
 client_mac = ""
 APP_SERVER_P = 30353
 CLIENT_P = 20054
-
+APP_SERVER_ADDR = "the_famous_cat.com"
 
 def generate_random_mac():
     mac = [0x00, 0x16, 0x3e,
@@ -43,7 +43,7 @@ def get_dns_ip():  # Get the DNS server IP address from the DHCP server
         sendp(dhcp_discover)
         time.sleep(1)
         print("DHCP discover sent, waiting for offer...")
-        for packet in sniff(filter="udp and dst port 68 ", iface="Ethernet", timeout=1, count=1):
+        for packet in sniff(filter="udp and dst port 68 ",iface=IFACE, timeout=1, count=1):
             if (DHCP in packet) and (packet[DHCP].options[0][1] == 2):
                 temp_ip = packet[BOOTP].yiaddr
                 discover_received = True
@@ -73,7 +73,7 @@ def get_dns_ip():  # Get the DNS server IP address from the DHCP server
         time.sleep(1)
         # print(dhcp_request.summary)
         print("DHCP request sent, waiting for ack...")
-        for packet in sniff(filter="udp and dst port 68 ", iface="Ethernet", timeout=1, count=1):
+        for packet in sniff(filter="udp and dst port 68 ",iface=IFACE, timeout=1, count=1):
             if DHCP in packet and packet[DHCP].options[0][1] == 5:  # DHCP ACK
                 offer_received = True
                 break
@@ -93,7 +93,7 @@ def get_app_ip(domain_name, dns_server):
     sendp(dns_request)
     response_received = False
     while not response_received:
-        for packet in sniff(filter=f"udp src port 53 and ip src {dns_server}", iface=conf.iface, timeout=1, count=1):
+        for packet in sniff(filter=f"udp src port 53 and ip src {dns_server}",iface=IFACE, timeout=1, count=1):
             if DNS in packet and packet[DNS].rcode == 3:  # DNS error
                 print("Domain name not found")
                 return None
@@ -104,11 +104,14 @@ def get_app_ip(domain_name, dns_server):
 
 
 def send_request(server_address, request):
-    client_socket = SCTPSocket(packet_size=1024, pkt_printer=True)
-    client_socket.bind(('localhost', CLIENT_P))
+    # change parmameters to print more or less data, and to change packet loss,
+    # default packet loss is -1 which means no packet loss
+    client_socket = SCTPSocket(packet_size=1024, pkt_printer=True, cc_printer=True, packet_loss=-1)
+    client_socket.bind(("localhost", CLIENT_P))
     client_socket.connect(server_address)
     client_socket.sendto(request)
     response = client_socket.recvfrom(1024).decode()
+    print(response)
     client_socket.close()
     return response
 
@@ -137,7 +140,7 @@ def show_image(img_data):
 def save_image(img_data):
     img = Image.open(BytesIO(img_data))
     random_name = str(random.randint(0, 1000000))
-    img.save(f'cat{random_name}.png', format='PNG')
+    img.save(f"cat{random_name}.png", format="PNG")
 
 
 def get_img_from_local_server(host, port):
@@ -147,16 +150,14 @@ def get_img_from_local_server(host, port):
     s.send(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
     # receive all image data
     data = b''
-    s.settimeout(1.5)
+    s.settimeout(2)
     while True:
         try:
             part = s.recv(1024)
             data += part
         except:
-            if data == b'':
-                continue
-            else:
-                break
+            if data == b'': continue
+            else: break
     s.close()
     return data
 
@@ -168,8 +169,9 @@ def get_img_and_show(app_ip):
     h = url.netloc.split(':')[0]
     p = url.netloc.split(':')[1]
     # from here change to clientttt!!!!!
+    print((h,p))
     img_data = get_img_from_local_server(h, p)
-    print(f'got {len(img_data)} bytes')
+    print(f"got {len(img_data)} bytes")
     show_image(img_data)
     save_image(img_data)
     print("saved image to curent directory")
@@ -179,6 +181,7 @@ if __name__ == "__main__":
 
     client_mac = generate_random_mac()  # generate random mac address for the client
     print("Client MAC address: " + client_mac)
+    # input("Press Enter to continue...")
     dns_server, new_ip = get_dns_ip()  # get the dns_ip from the dhcp server
     if dns_server is None or new_ip is None:
         print("No DNS server IP address received")
@@ -188,14 +191,13 @@ if __name__ == "__main__":
         print("DNS server: " + dns_server)
 
     # get the ip of app.html from dns server
-    app_ip = get_app_ip(sys.argv[1], dns_server)  # temporary dns ip
+    app_ip = get_app_ip(f"{APP_SERVER_ADDR}", dns_server)  # temporary dns ip
     if app_ip is None:
         print("No IP address received")
         exit(1)
     else:
-        print(f"IP address of {sys.argv[1]}: " + app_ip)
+        print(f"IP address of {APP_SERVER_ADDR}: " + app_ip)
 
-    # connect to the web server and get the requested file:
+    # # connect to the web server and get the requested file:
     get_img_and_show(app_ip)
-    get_img_and_show("127.0.0.1")
     print("Done.")
