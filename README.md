@@ -2,7 +2,7 @@
 
 Custom Reliable User Datagram Protocol (RUDP).
 A detailed report in Hebrew is included in the repository, containing screenshots of the system's operation and results.
-link to the report: [Hebrew Report](README.pdf)
+link to the project book: [Link to document](README.pdf)
 
 ![alt text](images/network-diagram.jpg)
 
